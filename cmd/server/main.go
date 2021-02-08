@@ -7,6 +7,7 @@ import (
 	"github.com/broothie/jottr/config"
 	"github.com/broothie/jottr/logger"
 	"github.com/broothie/jottr/server"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -30,6 +31,6 @@ func main() {
 		return
 	}
 
-	log.Info("server running", logger.Field("port", cfg.Port))
+	log.Info("server running", logger.Field("config", fmt.Sprintf("%+v", cfg)))
 	log.Err(http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), handler), "server stopped")
 }

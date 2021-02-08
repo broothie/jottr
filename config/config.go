@@ -1,7 +1,7 @@
 package config
 
 type Config struct {
-	Port        int    `default:"8080"`
-	Environment string `default:"development"`
-	SaveDelayMs int    `default:"750"`
+	Port        int    `envconfig:"PORT" default:"8080"`
+	Environment string `envconfig:"ENVIRONMENT" default:"development"`
+	SaveDelayMs int    `envconfig:"SAVE_DELAY_MS" default:"750"`
 }
