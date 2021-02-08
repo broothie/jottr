@@ -1,7 +1,7 @@
 package server
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	jotIDsSep        = ","
+	jotIDsSep        = "|"
 	jotIDsCookieName = "jot_ids"
 )
 
@@ -20,7 +20,7 @@ func getJotIDs(r *http.Request) []string {
 		return nil
 	}
 
-	log.Println("get cookie", cookie.Value)
+	fmt.Println("get cookie", cookie.Value)
 	return strings.Split(cookie.Value, jotIDsSep)
 }
 
@@ -39,14 +39,14 @@ func setJotID(w http.ResponseWriter, r *http.Request, id string) {
 		i++
 	}
 
-	log.Println("set cookie", jotIDsCookieName, idSlice)
+	fmt.Println("set cookie", idSlice)
 	http.SetCookie(w, &http.Cookie{
 		Name:     jotIDsCookieName,
 		Value:    strings.Join(idSlice, jotIDsSep),
-		Path:     "*",
-		Expires:  time.Now().Add(30 * 24 * time.Hour), // 30 days
+		Path:     "/",
+		Expires:  time.Now().Add(365 * 24 * time.Hour), // 1 year
 		Secure:   true,
-		HttpOnly: true,
+		HttpOnly: false,
 		SameSite: http.SameSiteStrictMode,
 	})
 }

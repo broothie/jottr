@@ -16,6 +16,10 @@ type Jot struct {
 	Body string `json:"body" firestore:"body"`
 }
 
+func (s *Server) index(w http.ResponseWriter, r *http.Request) {
+	s.render.HTML(w, http.StatusOK, "index", getJotIDs(r))
+}
+
 func (s *Server) newJot(w http.ResponseWriter, r *http.Request) {
 	id := newID()
 	if _, err := s.db.Collection("jots").Doc(id).Set(r.Context(), Jot{}); err != nil {
@@ -42,6 +46,7 @@ func (s *Server) showJot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setJotID(w, r, id)
 	s.render.HTML(w, http.StatusOK, "jots/show", map[string]interface{}{
 		"id":            id,
 		"body":          template.HTML(doc.Data()["body"].(string)),
