@@ -1,0 +1,87 @@
+{{ define "css-jots/show" }}
+<style>
+    .jot-page {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .jot-page .body {
+        width: 90%;
+        height: 90%;
+
+        outline: none;
+        font-family: monospace;
+        font-size: 15px;
+    }
+
+    .jot-page .footer {
+        width: 90%;
+
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .jot-page .footer .share-jot {
+        /*cursor: pointer;*/
+    }
+
+    .jot-page .footer .sync-status {
+        color: gray;
+    }
+
+    @media only screen and (max-width: 600px) {
+
+    }
+</style>
+{{ end }}
+
+<div class="jot-page">
+    <div id="body" class="body" contenteditable="true">
+        {{ .body }}
+    </div>
+
+    <div class="footer">
+{{/*        <button class="share-jot">share jot</button>*/}}
+        <div></div>
+        <p id="sync-status" class="sync-status">saved</p>
+    </div>
+</div>
+
+<script type="application/javascript">
+    const saveDelayMs = {{ .save_delay_ms }};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const id = "{{ .id }}";
+      const body = document.getElementById('body');
+      const syncStatus = document.getElementById('sync-status');
+      if (body.innerText === '') body.focus();
+
+      const sync = () => {
+        fetch(`/jot/${id}/sync`, { method: 'put', body: JSON.stringify({ body: body.innerHTML }) })
+          .catch(console.log)
+          .then((response) => response.json())
+          .then((json) => {
+            syncStatus.innerText = 'saved';
+          });
+      };
+
+      let lastUpdate = null;
+      body.addEventListener('input', (event) => {
+        lastUpdate = Date.now();
+        syncStatus.innerText = 'unsaved';
+
+        setTimeout(() => {
+          if ( lastUpdate && (new Date()) - lastUpdate > saveDelayMs) {
+            syncStatus.innerText = 'saving...';
+            sync();
+          }
+        }, saveDelayMs);
+      });
+    });
+</script>
