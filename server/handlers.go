@@ -6,23 +6,31 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"regexp"
 
+	"cloud.google.com/go/firestore"
+	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/julienschmidt/httprouter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var breakRegexp = regexp.MustCompile(`<br/?>`)
 
 type Jot struct {
 	ID   string `json:"id" firestore:"id"`
 	Body string `json:"body" firestore:"body"`
 }
 
-func (j Jot) Tagline() string {
+func (j Jot) LinkText() string {
 	if j.Body == "" {
 		return j.ID
 	}
 
-	return j.Body
+	lines := breakRegexp.Split(j.Body, -1)
+	firstLine := lines[0]
+	firstLineStripped := strip.StripTags(firstLine)
+	return firstLineStripped
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
@@ -31,8 +39,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		Documents(r.Context()).
 		GetAll()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		s.log.Err(err, "failed to get recent jots")
 	}
 
 	jots := make([]Jot, 0, len(docs))
@@ -52,7 +59,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 func (s *Server) newJot(w http.ResponseWriter, r *http.Request) {
 	id := newID()
 	if _, err := s.db.Collection("jots").Doc(id).Set(r.Context(), Jot{ID: id}); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.Error(w, err, "failed to create new jot", "failed to create new jot", http.StatusInternalServerError)
 		return
 	}
 
@@ -86,16 +93,17 @@ func (s *Server) showJot(w http.ResponseWriter, r *http.Request) {
 func (s *Server) syncJot(w http.ResponseWriter, r *http.Request) {
 	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
 
-	var jot Jot
-	if err := json.NewDecoder(bufio.NewReader(r.Body)).Decode(&jot); err != nil {
+	var requestPayload map[string]string
+	if err := json.NewDecoder(bufio.NewReader(r.Body)).Decode(&requestPayload); err != nil {
 		s.render.JSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
 		return
 	}
 
-	if _, err := s.db.Collection("jots").Doc(id).Set(r.Context(), jot); err != nil {
+	updates := []firestore.Update{{Path: "body", Value: requestPayload["body"]}}
+	if _, err := s.db.Collection("jots").Doc(id).Update(r.Context(), updates); err != nil {
 		s.render.JSON(w, http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		return
 	}
 
-	s.render.JSON(w, http.StatusOK, map[string]string{"body": jot.Body})
+	s.render.JSON(w, http.StatusOK, requestPayload)
 }

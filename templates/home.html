@@ -5,6 +5,10 @@
         display: flex;
         flex-direction: column;
     }
+
+    .recents a {
+        margin-top: 0.3em
+    }
 </style>
 {{ end }}
 
@@ -17,7 +21,7 @@
     <div class="recents">
         <strong>recent jots</strong>
         {{ range $jot := . }}
-            <a href="/jot/{{ $jot.ID }}">{{ $jot.Tagline }}</a>
+            <a href="/jot/{{ $jot.ID }}">{{ $jot.LinkText }}</a>
         {{ end }}
     </div>
 </div>

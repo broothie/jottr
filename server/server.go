@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 
 	"cloud.google.com/go/firestore"
 	"github.com/broothie/jottr/config"
@@ -41,4 +42,9 @@ func New(cfg config.Config, log *logger.Logger) (*Server, error) {
 
 	server.UseHandler(server.routes())
 	return server, nil
+}
+
+func (s *Server) Error(w http.ResponseWriter, err error, logMessage, userMessage string, code int) {
+	s.log.Err(err, logMessage, logger.Field("user_message", userMessage))
+	http.Error(w, userMessage, code)
 }
