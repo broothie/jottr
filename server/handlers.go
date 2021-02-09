@@ -53,13 +53,11 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 func (s *Server) newJot(w http.ResponseWriter, r *http.Request) {
 	id := newID()
 	if _, err := s.db.Collection("jots").Doc(id).Set(r.Context(), Jot{ID: id}); err != nil {
-		s.Error(w, err, "failed to create new jot", "failed to create new jot", http.StatusInternalServerError)
+		s.Error(w, err, "failed to create new jot", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
+	noCache(w)
 	http.Redirect(w, r, fmt.Sprintf("/jot/%s", id), http.StatusPermanentRedirect)
 }
 
@@ -76,6 +74,7 @@ func (s *Server) showJot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	noCache(w)
 	s.addJotID(w, r, id)
 	s.render.HTML(w, http.StatusOK, "jots/show", doc.Data())
 }
@@ -96,4 +95,21 @@ func (s *Server) syncJot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.render.JSON(w, http.StatusOK, jot)
+}
+
+func (s *Server) destroyJot(w http.ResponseWriter, r *http.Request) {
+	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
+
+	if _, err := s.db.Collection("jots").Doc(id).Delete(r.Context()); err != nil {
+		s.Error(w, err, "failed to delete jot", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/home", http.StatusPermanentRedirect)
+}
+
+func noCache(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
 }

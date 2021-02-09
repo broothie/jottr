@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	jotIDsSep        = "|"
 	jotIDsCookieName = "jot_ids"
+	jotIDsSeparator  = "|"
 )
 
 func (s *Server) getJotIDs(r *http.Request) []string {
@@ -21,32 +21,49 @@ func (s *Server) getJotIDs(r *http.Request) []string {
 	}
 
 	s.log.Info("get cookie", logger.Field("value", cookie.Value))
-	return strings.Split(cookie.Value, jotIDsSep)
+	return strings.Split(cookie.Value, jotIDsSeparator)
 }
 
 func (s *Server) addJotID(w http.ResponseWriter, r *http.Request, id string) {
-	ids := map[string]struct{}{id: {}}
+	idSet := map[string]struct{}{id: {}}
 	if cookie, _ := r.Cookie(jotIDsCookieName); cookie != nil {
-		for _, id := range strings.Split(cookie.Value, jotIDsSep) {
-			ids[id] = struct{}{}
+		for _, id := range strings.Split(cookie.Value, jotIDsSeparator) {
+			idSet[id] = struct{}{}
 		}
 	}
 
-	idSlice := make([]string, len(ids))
+	ids := make([]string, len(idSet))
 	i := 0
-	for id := range ids {
-		idSlice[i] = id
+	for id := range idSet {
+		ids[i] = id
 		i++
 	}
 
-	s.log.Info("set cookie", logger.Field("values", idSlice))
+	s.setJotIDsCookie(w, strings.Join(ids, jotIDsSeparator))
+}
+
+func (s *Server) removeJotID(w http.ResponseWriter, r *http.Request, id string) {
+	var ids []string
+	if cookie, _ := r.Cookie(jotIDsCookieName); cookie != nil {
+		for _, cookieID := range strings.Split(cookie.Value, jotIDsSeparator) {
+			if cookieID != id {
+				ids = append(ids, cookieID)
+			}
+		}
+	}
+
+	s.setJotIDsCookie(w, strings.Join(ids, jotIDsSeparator))
+}
+
+func (s *Server) setJotIDsCookie(w http.ResponseWriter, jotIDs string) {
+	s.log.Info("set cookie", logger.Field("jot_ids", jotIDs))
 	http.SetCookie(w, &http.Cookie{
 		Name:     jotIDsCookieName,
-		Value:    strings.Join(idSlice, jotIDsSep),
+		Value:    jotIDs,
 		Path:     "/",
 		Expires:  time.Now().Add(365 * 24 * time.Hour), // 1 year
 		Secure:   s.config.Environment == "production",
-		HttpOnly: false,
+		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
 }

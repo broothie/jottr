@@ -44,7 +44,7 @@ func New(cfg config.Config, log *logger.Logger) (*Server, error) {
 	return server, nil
 }
 
-func (s *Server) Error(w http.ResponseWriter, err error, logMessage, userMessage string, code int) {
-	s.log.Err(err, logMessage, logger.Field("user_message", userMessage))
-	http.Error(w, userMessage, code)
+func (s *Server) Error(w http.ResponseWriter, err error, message string, code int, logFields ...logger.Fieldser) {
+	s.log.Err(err, message, logger.Field("user_message", message))
+	http.Error(w, message, code)
 }

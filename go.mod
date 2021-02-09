@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	cloud.google.com/go/firestore v1.4.0
-	github.com/grokify/html-strip-tags-go v0.0.1
 	github.com/joho/godotenv v1.3.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0

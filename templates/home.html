@@ -1,15 +1,15 @@
 {{ define "css-home" }}
-<style>
-    .recents {
-        margin-top: 1em;
-        display: flex;
-        flex-direction: column;
-    }
+    <style>
+        .recents {
+            margin-top: 1em;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .recents a {
-        margin-top: 0.3em
-    }
-</style>
+        .recents a {
+            margin-top: 0.3em
+        }
+    </style>
 {{ end }}
 
 <div class="home-page">
@@ -18,10 +18,12 @@
         {{ template "partials/new" }}
     </div>
 
-    <div class="recents">
-        <strong>recent jots</strong>
-        {{ range $jot := . }}
-            <a href="/jot/{{ $jot.ID }}">{{ $jot.LinkText }}</a>
-        {{ end }}
-    </div>
+    {{ if . }}
+        <div class="recents">
+            <strong>recent jots</strong>
+            {{ range $jot := . }}
+                <a href="/jot/{{ $jot.ID }}">{{ $jot.LinkText }}</a>
+            {{ end }}
+        </div>
+    {{ end }}
 </div>
