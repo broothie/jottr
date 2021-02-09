@@ -1,5 +1,7 @@
 {{ define "css-jots/show" }}
     <link href="/css/quill.core.css" rel="stylesheet">
+    <link href="/css/quill.snow.css" rel="stylesheet">
+
     <style>
         .jot-page {
             width: 100%;
@@ -21,6 +23,10 @@
             font-size: 15px;
         }
 
+        .jot-page .body.ql-container {
+          border: none;
+        }
+
         .jot-page footer {
             width: 50%;
             min-width: 40em;
@@ -28,6 +34,13 @@
             display: flex;
             flex-direction: row;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .jot-page footer .buttons {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
         }
 
         .jot-page footer .buttons a {
@@ -55,6 +68,8 @@
 <div class="jot-page">
     <div id="body" class="body"></div>
 
+    {{ template "jots/toolbar" }}
+
     <footer>
         <div class="buttons">
           <a href="/home">home</a>
@@ -69,7 +84,7 @@
 <script type="application/javascript">
   const id = "{{ .id }}";
   const saveDelayMs = 750;
-  const quillArgs = ['#body', {placeholder: 'jot something...'}];
+  const quillArgs = ['#body', {placeholder: 'jot something...', theme: 'snow', modules: { toolbar: '#toolbar' }}];
 
   document.addEventListener('DOMContentLoaded', () => {
     const quill = new Quill(...quillArgs);

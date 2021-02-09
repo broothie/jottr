@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"cloud.google.com/go/firestore"
@@ -13,6 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var whitespaceMatcher = regexp.MustCompile(`^\s+$`)
+
 type Jot struct {
 	ID       string      `json:"id" firestore:"id"`
 	Body     string      `json:"body" firestore:"body"`
@@ -20,7 +23,7 @@ type Jot struct {
 }
 
 func (j Jot) LinkText() string {
-	if j.Body == "" {
+	if whitespaceMatcher.MatchString(j.Body) {
 		return j.ID
 	}
 
@@ -28,8 +31,9 @@ func (j Jot) LinkText() string {
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
+	cookieJotIDs := s.getJotIDs(r)
 	docs, err := s.db.Collection("jots").
-		Where("id", "in", s.getJotIDs(r)).
+		Where("id", "in", cookieJotIDs).
 		Documents(r.Context()).
 		GetAll()
 	if err != nil {
@@ -37,6 +41,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jots := make([]Jot, 0, len(docs))
+	foundJotIDs := make(map[string]struct{})
 	for _, doc := range docs {
 		var jot Jot
 		if err := doc.DataTo(&jot); err != nil {
@@ -44,7 +49,14 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		foundJotIDs[jot.ID] = struct{}{}
 		jots = append(jots, jot)
+	}
+
+	for _, cookieJotID := range cookieJotIDs {
+		if _, jotIDFound := foundJotIDs[cookieJotID]; !jotIDFound {
+			s.removeJotID(w, r, cookieJotID)
+		}
 	}
 
 	s.render.HTML(w, http.StatusOK, "home", jots)
@@ -63,6 +75,7 @@ func (s *Server) newJot(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) showJot(w http.ResponseWriter, r *http.Request) {
 	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
+
 	doc, err := s.db.Collection("jots").Doc(id).Get(r.Context())
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
@@ -105,7 +118,7 @@ func (s *Server) destroyJot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/home", http.StatusPermanentRedirect)
+	s.removeJotID(w, r, id)
 }
 
 func noCache(w http.ResponseWriter) {

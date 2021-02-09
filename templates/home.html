@@ -1,6 +1,8 @@
 {{ define "css-home" }}
     <style>
         .home-page {
+            height: 100%;
+
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -24,7 +26,7 @@
             <strong>welcome to jottr!</strong>
             {{ template "partials/new" }}
         </div>
-    
+
         {{ if . }}
             <div class="recents">
                 <strong>recent jots</strong>
