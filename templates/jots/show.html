@@ -21,7 +21,7 @@
             font-size: 15px;
         }
 
-        .jot-page .footer {
+        .jot-page footer {
             width: 50%;
             min-width: 40em;
 
@@ -30,11 +30,11 @@
             justify-content: space-between;
         }
 
-        .jot-page .footer .buttons a {
+        .jot-page footer .buttons a {
           margin-right: 0.75em;
         }
 
-        .jot-page .footer .sync-status {
+        .jot-page footer .sync-status {
             color: gray;
         }
 
@@ -44,7 +44,7 @@
                 min-width: 0;
             }
 
-            .jot-page .footer {
+            .jot-page footer {
                 width: 100%;
                 min-width: 0;
             }
@@ -55,14 +55,14 @@
 <div class="jot-page">
     <div id="body" class="body"></div>
 
-    <div class="footer">
+    <footer>
         <div class="buttons">
           <a href="/home">home</a>
           <a id="delete" href="#">delete</a>
         </div>
 
         <p id="sync-status" class="sync-status">saved</p>
-    </div>
+    </footer>
 </div>
 
 <script src="/js/quill.min.js"></script>
@@ -75,15 +75,12 @@
     const quill = new Quill(...quillArgs);
     const syncStatus = document.getElementById('sync-status');
 
-    {{ if not .contents }}
-      quill.setText({{ .body }});
-    {{ else }}
-      quill.setContents({{ .contents }});
-    {{ end }}
-
+    // Start quill
+    quill.setContents({{ .contents }});
     quill.focus();
     quill.setSelection(quill.getLength());
 
+    // Sync request
     const sync = () => {
       syncStatus.innerText = 'saving...';
       const fetchOptions = {
@@ -97,6 +94,7 @@
         .then((json) => syncStatus.innerText = 'saved');
     };
 
+    // Handle text change event
     let lastUpdate = null;
     let lastTimeout = null;
     quill.on('text-change', (event) => {
@@ -109,11 +107,13 @@
       }, saveDelayMs);
     });
 
+    // Save when page is unloaded
     window.addEventListener('beforeunload', () => {
       if (lastTimeout) clearTimeout(lastTimeout);
       sync();
     });
 
+    // Delete link
     document.getElementById('delete').addEventListener('click', (event) => {
       event.preventDefault();
 

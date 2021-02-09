@@ -26,10 +26,8 @@ func (s *Server) getJotIDs(r *http.Request) []string {
 
 func (s *Server) addJotID(w http.ResponseWriter, r *http.Request, id string) {
 	idSet := map[string]struct{}{id: {}}
-	if cookie, _ := r.Cookie(jotIDsCookieName); cookie != nil {
-		for _, id := range strings.Split(cookie.Value, jotIDsSeparator) {
-			idSet[id] = struct{}{}
-		}
+	for _, id := range s.getJotIDs(r) {
+		idSet[id] = struct{}{}
 	}
 
 	ids := make([]string, len(idSet))
@@ -44,11 +42,9 @@ func (s *Server) addJotID(w http.ResponseWriter, r *http.Request, id string) {
 
 func (s *Server) removeJotID(w http.ResponseWriter, r *http.Request, id string) {
 	var ids []string
-	if cookie, _ := r.Cookie(jotIDsCookieName); cookie != nil {
-		for _, cookieID := range strings.Split(cookie.Value, jotIDsSeparator) {
-			if cookieID != id {
-				ids = append(ids, cookieID)
-			}
+	for _, cookieID := range s.getJotIDs(r) {
+		if cookieID != id {
+			ids = append(ids, cookieID)
 		}
 	}
 

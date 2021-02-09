@@ -1,29 +1,41 @@
 {{ define "css-home" }}
     <style>
-        .recents {
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .top .recents {
             margin-top: 1em;
             display: flex;
             flex-direction: column;
         }
 
-        .recents a {
-            margin-top: 0.3em
+        .top .recents a {
+            margin-top: 0.3em;
         }
     </style>
 {{ end }}
 
 <div class="home-page">
-    <div class="header">
-        <strong>welcome to jottr!</strong>
-        {{ template "partials/new" }}
+    <div class="top">
+        <div>
+            <strong>welcome to jottr!</strong>
+            {{ template "partials/new" }}
+        </div>
+    
+        {{ if . }}
+            <div class="recents">
+                <strong>recent jots</strong>
+                {{ range $jot := . }}
+                    <a href="/jot/{{ $jot.ID }}">{{ $jot.LinkText }}</a>
+                {{ end }}
+            </div>
+        {{ end }}
     </div>
 
-    {{ if . }}
-        <div class="recents">
-            <strong>recent jots</strong>
-            {{ range $jot := . }}
-                <a href="/jot/{{ $jot.ID }}">{{ $jot.LinkText }}</a>
-            {{ end }}
-        </div>
-    {{ end }}
+    <footer>
+        <a href="https://github.com/broothie/jottr">github</a>
+    </footer>
 </div>
