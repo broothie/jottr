@@ -4,22 +4,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/http"
-	"regexp"
+	"strings"
 
 	"cloud.google.com/go/firestore"
-	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/julienschmidt/httprouter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-var breakRegexp = regexp.MustCompile(`<br/?>`)
-
 type Jot struct {
-	ID   string `json:"id" firestore:"id"`
-	Body string `json:"body" firestore:"body"`
+	ID       string      `json:"id" firestore:"id"`
+	Body     string      `json:"body" firestore:"body"`
+	Contents interface{} `json:"contents" firestore:"contents"`
 }
 
 func (j Jot) LinkText() string {
@@ -27,10 +24,7 @@ func (j Jot) LinkText() string {
 		return j.ID
 	}
 
-	lines := breakRegexp.Split(j.Body, -1)
-	firstLine := lines[0]
-	firstLineStripped := strip.StripTags(firstLine)
-	return firstLineStripped
+	return strings.Split(j.Body, "\n")[0]
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
@@ -83,27 +77,23 @@ func (s *Server) showJot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.addJotID(w, r, id)
-	s.render.HTML(w, http.StatusOK, "jots/show", map[string]interface{}{
-		"id":            id,
-		"body":          template.HTML(doc.Data()["body"].(string)),
-		"save_delay_ms": s.config.SaveDelayMs,
-	})
+	s.render.HTML(w, http.StatusOK, "jots/show", doc.Data())
 }
 
 func (s *Server) syncJot(w http.ResponseWriter, r *http.Request) {
 	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
 
-	var requestPayload map[string]string
-	if err := json.NewDecoder(bufio.NewReader(r.Body)).Decode(&requestPayload); err != nil {
+	var jot Jot
+	if err := json.NewDecoder(bufio.NewReader(r.Body)).Decode(&jot); err != nil {
 		s.render.JSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
 		return
 	}
 
-	updates := []firestore.Update{{Path: "body", Value: requestPayload["body"]}}
+	updates := []firestore.Update{{Path: "body", Value: jot.Body}, {Path: "contents", Value: jot.Contents}}
 	if _, err := s.db.Collection("jots").Doc(id).Update(r.Context(), updates); err != nil {
 		s.render.JSON(w, http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		return
 	}
 
-	s.render.JSON(w, http.StatusOK, requestPayload)
+	s.render.JSON(w, http.StatusOK, jot)
 }

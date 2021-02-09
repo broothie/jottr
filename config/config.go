@@ -5,7 +5,6 @@ import "encoding/json"
 type Config struct {
 	Port        int    `envconfig:"PORT" default:"8080"`
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
-	SaveDelayMs int    `envconfig:"SAVE_DELAY_MS" default:"1000"`
 }
 
 func (c Config) Fields() map[string]interface{} {
@@ -13,6 +12,5 @@ func (c Config) Fields() map[string]interface{} {
 
 	var fields map[string]interface{}
 	json.Unmarshal(b, &fields)
-
 	return fields
 }

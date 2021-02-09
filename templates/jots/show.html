@@ -1,85 +1,104 @@
 {{ define "css-jots/show" }}
-{{/*<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet">*/}}
-<style>
-    .jot-page {
-        width: 100%;
-        height: 100%;
+    <link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet">
+    <style>
+        .jot-page {
+            width: 100%;
+            height: 100%;
 
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
 
-    .jot-page .body {
-        flex: 1;
-        width: 100%;
+        .jot-page .body {
+            flex: 1;
+            width: 50%;
+            min-width: 40em;
 
-        outline: none;
-        font-family: monospace;
-        font-size: 15px;
-    }
+            outline: none;
+            font-family: monospace;
+            font-size: 15px;
+        }
 
-    .jot-page .footer {
-        width: 100%;
+        .jot-page .footer {
+            width: 50%;
+            min-width: 40em;
 
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-    }
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
 
-    .jot-page .footer .sync-status {
-        color: gray;
-    }
-</style>
+        .jot-page .footer .sync-status {
+            color: gray;
+        }
+
+        @media screen and (max-width: 480px) {
+            .jot-page .body {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .jot-page .footer {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+    </style>
 {{ end }}
 
 <div class="jot-page">
-    <div id="body" class="body" contenteditable="true">
-        {{ .body }}
-    </div>
+    <div id="body" class="body"></div>
 
     <div class="footer">
-        <a href="/home">go home</a>
-        <div id="toolbar"></div>
+        <a href="/home">home</a>
         <p id="sync-status" class="sync-status">saved</p>
     </div>
 </div>
 
-{{/*<script src="//cdn.quilljs.com/1.3.6/quill.core.js"></script>*/}}
-{{/*<script src="//cdn.quilljs.com/1.3.6/quill.min.js"></script>*/}}
+<script src="//cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script type="application/javascript">
-    const saveDelayMs = {{ .save_delay_ms }};
-    const quillArgs = ['#body', { placeholder: 'jot something...', modules: { toolbar: '#toolbar' } }];
+  const id = "{{ .id }}";
+  const saveDelayMs = 750;
+  const quillArgs = ['#body', {placeholder: 'jot something...'}];
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // const quill = new Quill(...quillArgs);
-      const id = "{{ .id }}";
-      const body = document.getElementById('body');
-      const syncStatus = document.getElementById('sync-status');
-      if (body.innerText === '') body.focus();
-      // quill.focus();
+  document.addEventListener('DOMContentLoaded', () => {
+    const quill = new Quill(...quillArgs);
+    const syncStatus = document.getElementById('sync-status');
 
-      const sync = () => {
-        fetch(`/jot/${id}/sync`, { method: 'put', body: JSON.stringify({ body: body.innerHTML }) })
-          .catch(console.log)
-          .then((response) => response.json())
-          .then((json) => {
-            syncStatus.innerText = 'saved';
-          });
+    {{ if not .contents }}
+      quill.setText("{{ .body }}");
+    {{ else }}
+      quill.setContents({{ .contents }});
+    {{ end }}
+
+    quill.focus();
+    quill.setSelection(quill.getLength());
+
+    const sync = () => {
+      syncStatus.innerText = 'saving...';
+      const fetchOptions = {
+        method: 'put',
+        body: JSON.stringify({body: quill.getText(), contents: quill.getContents()})
       };
 
-      let lastUpdate = null;
-      body.addEventListener('input', (event) => {
-        lastUpdate = Date.now();
-        syncStatus.innerText = 'unsaved';
+      fetch(`/jot/${id}/sync`, fetchOptions)
+        .catch(console.log)
+        .then((response) => response.json())
+        .then((json) => syncStatus.innerText = 'saved');
+    };
 
-        setTimeout(() => {
-          if (lastUpdate && (new Date()) - lastUpdate > saveDelayMs) {
-            syncStatus.innerText = 'saving...';
-            sync();
-          }
-        }, saveDelayMs);
-      });
+    let lastUpdate = null;
+    let lastTimeout = null;
+    quill.on('text-change', (event) => {
+      lastUpdate = Date.now();
+      syncStatus.innerText = 'not saved';
+
+      if (lastTimeout) clearTimeout(lastTimeout);
+      lastTimeout = setTimeout(() => {
+        if (lastUpdate && (new Date()) - lastUpdate > saveDelayMs) sync();
+      }, saveDelayMs);
     });
+  });
 </script>
