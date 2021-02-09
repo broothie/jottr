@@ -13,16 +13,45 @@ import (
 )
 
 type Jot struct {
+	ID   string `json:"id" firestore:"id"`
 	Body string `json:"body" firestore:"body"`
 }
 
-func (s *Server) index(w http.ResponseWriter, r *http.Request) {
-	s.render.HTML(w, http.StatusOK, "index", getJotIDs(r))
+func (j Jot) Tagline() string {
+	if j.Body == "" {
+		return j.ID
+	}
+
+	return j.Body
+}
+
+func (s *Server) home(w http.ResponseWriter, r *http.Request) {
+	docs, err := s.db.Collection("jots").
+		Where("id", "in", s.getJotIDs(r)).
+		Documents(r.Context()).
+		GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jots := make([]Jot, 0, len(docs))
+	for _, doc := range docs {
+		var jot Jot
+		if err := doc.DataTo(&jot); err != nil {
+			s.log.Err(err, "failed to deserialize jot doc")
+			continue
+		}
+
+		jots = append(jots, jot)
+	}
+
+	s.render.HTML(w, http.StatusOK, "home", jots)
 }
 
 func (s *Server) newJot(w http.ResponseWriter, r *http.Request) {
 	id := newID()
-	if _, err := s.db.Collection("jots").Doc(id).Set(r.Context(), Jot{}); err != nil {
+	if _, err := s.db.Collection("jots").Doc(id).Set(r.Context(), Jot{ID: id}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -46,7 +75,7 @@ func (s *Server) showJot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setJotID(w, r, id)
+	s.addJotID(w, r, id)
 	s.render.HTML(w, http.StatusOK, "jots/show", map[string]interface{}{
 		"id":            id,
 		"body":          template.HTML(doc.Data()["body"].(string)),
@@ -68,5 +97,5 @@ func (s *Server) syncJot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.render.JSON(w, http.StatusOK, map[string]string{"body": ""})
+	s.render.JSON(w, http.StatusOK, map[string]string{"body": jot.Body})
 }

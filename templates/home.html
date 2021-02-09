@@ -1,0 +1,23 @@
+{{ define "css-home" }}
+<style>
+    .recents {
+        margin-top: 1em;
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+{{ end }}
+
+<div class="home-page">
+    <div class="header">
+        <strong>welcome to jottr!</strong>
+        {{ template "partials/new" }}
+    </div>
+
+    <div class="recents">
+        <strong>recent jots</strong>
+        {{ range $jot := . }}
+            <a href="/jot/{{ $jot.ID }}">{{ $jot.Tagline }}</a>
+        {{ end }}
+    </div>
+</div>

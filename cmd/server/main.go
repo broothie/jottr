@@ -31,6 +31,6 @@ func main() {
 		return
 	}
 
-	log.Info("server running", logger.Field("config", fmt.Sprintf("%+v", cfg)))
+	log.Info("server running", cfg)
 	log.Err(http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), handler), "server stopped")
 }

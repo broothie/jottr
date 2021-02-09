@@ -6,3 +6,15 @@ html, body {
   box-sizing: border-box;
   font-family: sans-serif;
 }
+
+body {
+  padding: 2em;
+}
+
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
