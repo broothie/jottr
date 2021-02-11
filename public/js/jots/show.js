@@ -1,5 +1,5 @@
 const saveDelayMs = 750;
-const quillArgs = ['#body', {placeholder: 'jot something...', theme: 'snow', modules: { toolbar: '#toolbar' }}];
+const quillArgs = ['#editor', {placeholder: 'jot something...', theme: 'snow', modules: {toolbar: '#toolbar'}}];
 
 const script = document.currentScript;
 const id = script.getAttribute('data-id');

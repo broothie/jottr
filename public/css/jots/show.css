@@ -9,7 +9,7 @@
     align-items: center;
 }
 
-.jot-page .body {
+.jot-page .editor {
     flex: 1;
     width: 50%;
     min-width: 40em;
@@ -19,7 +19,7 @@
     font-size: 15px;
 }
 
-.jot-page .body.ql-container {
+.jot-page .editor.ql-container {
   border: none;
 }
 
@@ -48,7 +48,7 @@
 }
 
 @media screen and (max-width: 480px) {
-    .jot-page .body {
+    .jot-page .editor {
         width: 100%;
         min-width: 0;
     }
