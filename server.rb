@@ -79,7 +79,11 @@ helpers do
   ENCODED_EMPTY_ARRAY = Base64.urlsafe_encode64([].to_json).freeze
 
   def new_jot_code
-    "#{Array.new(3) { ALPHABET.sample }.join}-#{Array.new(3) { ALPHABET.sample }.join}"
+    "#{random_string(3)}-#{random_string(4)}-#{random_string(3)}"
+  end
+
+  def random_string(length = 3)
+    Array.new(length) { ALPHABET.sample }
   end
 
   def set_recent_jot!(jot_id)
