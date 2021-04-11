@@ -1,54 +1,89 @@
 <main class="jot-page">
   <div class="nav-bar">
-    <p id="saved-status" class="saved-status">saved</p>
-    <p><a href="/home">home</a></p>
-    <button id="delete-jot">delete</button>
+    <% if @read_only %>
+      <p><a href="/home">home</a></p>
+    <% else %>
+      <p id="saved-status" class="saved-status">saved</p>
+
+      <p><a href="/home">home</a></p>
+
+      <a href="/"><button id="new-jot">new</button></a>
+
+      <a href="/jots/<%= @jot[:read_only_id] %>/readonly" target="_blank">
+        <button>readonly</button>
+      </a>
+
+      <button id="delete-jot">delete</button>
+    <% end %>
   </div>
 
-  <div id="jot-body" class="jot-body" contenteditable="true">
-    <%= @jot[:body] %>
+
+  <div id="jot-body-container" class="jot-body-container">
+    <div id="jot-body" class="jot-body" contenteditable="<%= !@read_only %>">
+      <%= @jot[:body] %>
+    </div>
   </div>
 </main>
 
 <script type="text/javascript" charset="utf-8">
-  const jotId = '<%= @jot[:id] %>'
-  const inputDelayMilliseconds = 500
+  <% unless @read_only %>
+    const jotId = '<%= @jot[:id] %>'
+    const inputDelayMilliseconds = 250
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const jotBody = document.getElementById('jot-body')
-    const savedStatus = document.getElementById('saved-status')
-    let lastInputAt = Date.now()
+    document.addEventListener('DOMContentLoaded', () => {
+      const jotBodyContainer = document.getElementById('jot-body-container')
+      const jotBody = document.getElementById('jot-body')
+      const savedStatus = document.getElementById('saved-status')
+      let lastInputAt = Date.now()
 
-    setCursorToEnd(jotBody)
+      scrollToBottom(jotBodyContainer)
+      setCursorToEnd(jotBody)
 
-    jotBody.addEventListener('input', () => {
-      savedStatus.innerText = 'not saved'
-      const currentInputAt = Date.now()
-      if (currentInputAt > lastInputAt) lastInputAt = currentInputAt
+      jotBody.addEventListener('input', () => {
+        savedStatus.innerText = 'not saved'
+        const currentInputAt = Date.now()
+        if (currentInputAt > lastInputAt) lastInputAt = currentInputAt
 
-      setTimeout(() => {
-        if (lastInputAt > Date.now() - inputDelayMilliseconds) return
+        setTimeout(() => {
+          if (lastInputAt > Date.now() - inputDelayMilliseconds) return
 
-        savedStatus.innerText = 'saving...'
-        const body = JSON.stringify({ title: jotBody.innerText.split('\n')[0], body: jotBody.innerHTML })
-        fetch(`/api/jots/${jotId}`, { method: 'put', body })
-          .then(() => savedStatus.innerText = 'saved')
-      }, inputDelayMilliseconds)
+          savedStatus.innerText = 'saving...'
+          const title = jotBody.innerText.split('\n')[0]
+          const body = JSON.stringify({ title , body: jotBody.innerHTML })
+
+          fetch(`/api/jots/${jotId}`, { method: 'put', body })
+            .then(() => {
+              savedStatus.innerText = 'saved'
+              setTitle(title)
+            })
+        }, inputDelayMilliseconds)
+      })
+
+      document.getElementById('delete-jot').addEventListener('click', () => {
+        if (!confirm(`Are you sure you want to delete this jot (id=${jotId})`)) return
+
+        fetch(`/api/jots/${jotId}`, { method: 'delete' }).then(() => location.href = '/home')
+      })
     })
 
-    document.getElementById('delete-jot').addEventListener('click', () => {
-      if (!confirm(`Are you sure you want to delete this jot (id=${jotId})`)) return
+    function scrollToBottom(element) {
+      element.scrollTop = element.scrollHeight
+    }
 
-      fetch(`/api/jots/${jotId}`, { method: 'delete' }).then(() => location.href = '/home')
-    })
-  })
+    function setCursorToEnd(contentEditable) {
+      const range = document.createRange()
+      range.selectNodeContents(contentEditable)
+      range.collapse(false)
+      const selection = window.getSelection()
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+  <% end %>
 
-  function setCursorToEnd(contentEditable) {
-    const range = document.createRange()
-    range.selectNodeContents(contentEditable)
-    range.collapse(false)
-    const selection = window.getSelection()
-    selection.removeAllRanges()
-    selection.addRange(range)
+  function setTitle(title) {
+    if (!title || title.length === 0) title = jotId
+    document.title = `jottr - ${title}`
   }
+
+  setTitle('<%= @jot[:title] %>')
 </script>

@@ -30,7 +30,7 @@ end
 get '/' do
   jot_id = new_jot_code
   now = Time.now
-  jots.doc(jot_id).set(id: jot_id, created_at: now, updated_at: now)
+  jots.doc(jot_id).set(id: jot_id, read_only_id: new_jot_code, created_at: now, updated_at: now)
 
   redirect "/jots/#{jot_id}"
 end
@@ -41,11 +41,25 @@ get '/jots/:jot_id' do |jot_id|
 
   unless jot_doc.exists?
     @jot_id = jot_id
-    halt erb :not_found unless jot_doc.exists?
+    halt erb :not_found
   end
 
   set_recent_jot!(jot_id)
   @jot = jot_doc.data
+  erb :jot
+end
+
+# Serve up a readonly jot
+get '/jots/:read_only_jot_id/readonly' do |read_only_jot_id|
+  jot_docs = jots.where(:read_only_id, :==, read_only_jot_id).get
+
+  if jot_docs.count.zero?
+    @jot_id = read_only_jot_id
+    halt erb :not_found
+  end
+
+  @read_only = true
+  @jot = jot_docs.first.data
   erb :jot
 end
 
