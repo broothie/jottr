@@ -18,6 +18,7 @@ end
 # About page
 get '/home' do
   @jots = get_recent_jots
+  @title = 'jottr - home'
   erb :home
 end
 
@@ -46,6 +47,7 @@ get '/jots/:jot_id' do |jot_id|
 
   set_recent_jot!(jot_id)
   @jot = jot_doc.data
+  @title = "jottr - #{@jot[:title]}"
   erb :jot
 end
 
@@ -58,8 +60,9 @@ get '/jots/:read_only_jot_id/readonly' do |read_only_jot_id|
     halt erb :not_found
   end
 
-  @read_only = true
   @jot = jot_docs.first.data
+  @title = "jottr - #{@jot[:title]}"
+  @read_only = true
   erb :jot
 end
 
@@ -83,7 +86,7 @@ helpers do
   end
 
   def random_string(length = 3)
-    Array.new(length) { ALPHABET.sample }
+    Array.new(length) { ALPHABET.sample }.join
   end
 
   def set_recent_jot!(jot_id)
