@@ -76,11 +76,10 @@ end
 
 helpers do
   ALPHABET = ('a'..'z').to_a.freeze
-  DIGITS = (0..9).to_a.freeze
   ENCODED_EMPTY_ARRAY = Base64.urlsafe_encode64([].to_json).freeze
 
   def new_jot_code
-    "#{Array.new(3) { ALPHABET.sample }.join}-#{Array.new(3) { DIGITS.sample }.join}"
+    "#{Array.new(3) { ALPHABET.sample }.join}-#{Array.new(3) { ALPHABET.sample }.join}"
   end
 
   def set_recent_jot!(jot_id)
