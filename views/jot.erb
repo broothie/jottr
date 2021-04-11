@@ -26,7 +26,8 @@
         if (lastInputAt > Date.now() - inputDelayMilliseconds) return
 
         savedStatus.innerText = 'saving...'
-        fetch(`/api/jots/${jotId}`, { method: 'put', body: JSON.stringify({ body: jotBody.innerHTML })})
+        const body = JSON.stringify({ title: jotBody.innerText.split('\n')[0], body: jotBody.innerHTML })
+        fetch(`/api/jots/${jotId}`, { method: 'put', body })
           .then(() => savedStatus.innerText = 'saved')
       }, inputDelayMilliseconds)
     })

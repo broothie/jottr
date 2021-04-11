@@ -9,6 +9,10 @@ require 'json'
 set session_secret: ENV.fetch('SESSION_SECRET')
 enable :sessions
 
+not_found do
+  redirect '/home'
+end
+
 # Ping
 get '/ping' do
   'pong'
@@ -30,7 +34,7 @@ end
 get '/' do
   jot_id = random_string
   now = Time.now
-  jots.doc(jot_id).set(id: jot_id, body: '', created_at: now, updated_at: now)
+  jots.doc(jot_id).set(id: jot_id, created_at: now, updated_at: now)
 
   redirect "/jots/#{jot_id}"
 end
@@ -52,11 +56,12 @@ end
 # Update jot in db
 put '/api/jots/:jot_id' do |jot_id|
   payload = JSON.parse(request.body.read)
-  jots.doc(jot_id).update(body: payload['body'], updated_at: Time.now)
+  jots.doc(jot_id).update(title: payload['title'], body: payload['body'], updated_at: Time.now)
 end
 
 helpers do
   ALPHABET = ('a'..'z').to_a.freeze
+  ENCODED_EMPTY_ARRAY = Base64.urlsafe_encode64([].to_json).freeze
 
   def random_string(length = 10)
     Array.new(length) { ALPHABET.sample }.join
@@ -69,11 +74,19 @@ helpers do
   end
 
   def get_recent_jot_ids
-    (cookies[:jot_ids] || '').split('|')
+    cookie_decode(cookies[:jot_ids] || ENCODED_EMPTY_ARRAY)
   end
 
   def set_recent_jot_cookie!(jot_ids)
-    cookies[:jot_ids] = jot_ids.join('|')
+    cookies[:jot_ids] = cookie_encode(jot_ids)
+  end
+
+  def cookie_encode(value)
+    Base64.urlsafe_encode64(value.to_json)
+  end
+
+  def cookie_decode(raw)
+    JSON.parse(Base64.urlsafe_decode64(raw))
   end
 
   def jots
