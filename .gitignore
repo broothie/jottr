@@ -1,3 +1,5 @@
 gcloud-key.json
 gin-bin
 .env
+.sass-cache
+.byebug_history

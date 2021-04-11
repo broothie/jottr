@@ -1,0 +1,15 @@
+<main class="home-page">
+  <p>👋 welcome to jottr!</p>
+
+  <a href="/">create new jot</a>
+
+  <% unless @jots.count.zero? %>
+    <p>old jots</p>
+
+    <div>
+      <% @jots.each do |jot| %>
+        <a href="/jots/<%= jot[:id] %>"><%= jot[:body].split(/<br\/?>/).first %></a>
+      <% end %>
+    </div>
+  <% end %>
+</main>

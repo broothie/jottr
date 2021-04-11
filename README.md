@@ -3,7 +3,7 @@
 ## To-do
 
 - [ ] Multiple simultaneous editors
-- [x] Add toolbar
+- [ ] Add toolbar
 
 ## Attributions
 

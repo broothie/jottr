@@ -1,0 +1,43 @@
+<main class="jot-page">
+  <div id="saved-status" class="saved-status">saved</div>
+
+  <div id="jot-body" class="jot-body" contenteditable="true">
+    <%= @jot[:body] %>
+  </div>
+</main>
+
+<script type="text/javascript" charset="utf-8">
+  const jotId = '<%= @jot[:id] %>'
+  const inputDelayMilliseconds = 500
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const jotBody = document.getElementById('jot-body')
+    const savedStatus = document.getElementById('saved-status')
+    let lastInputAt = Date.now()
+
+    setCursorToEnd(jotBody)
+
+    jotBody.addEventListener('input', () => {
+      savedStatus.innerText = 'not saved'
+      const currentInputAt = Date.now()
+      if (currentInputAt > lastInputAt) lastInputAt = currentInputAt
+
+      setTimeout(() => {
+        if (lastInputAt > Date.now() - inputDelayMilliseconds) return
+
+        savedStatus.innerText = 'saving...'
+        fetch(`/api/jots/${jotId}`, { method: 'put', body: JSON.stringify({ body: jotBody.innerHTML })})
+          .then(() => savedStatus.innerText = 'saved')
+      }, inputDelayMilliseconds)
+    })
+  })
+
+  function setCursorToEnd(contentEditable) {
+    const range = document.createRange()
+    range.selectNodeContents(contentEditable)
+    range.collapse(false)
+    const selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+</script>
