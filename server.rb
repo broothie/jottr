@@ -6,9 +6,6 @@ require 'google/cloud/firestore'
 require 'date'
 require 'json'
 
-set session_secret: ENV.fetch('SESSION_SECRET')
-enable :sessions
-
 not_found do
   redirect '/home'
 end
@@ -20,8 +17,7 @@ end
 
 # About page
 get '/home' do
-  jot_ids = get_recent_jot_ids
-  @jots = jot_ids.empty? ? [] : jots.where(:id, 'in', jot_ids).get
+  @jots = get_recent_jots
   erb :home
 end
 
@@ -32,7 +28,7 @@ end
 
 # Root. Automatically redirects to brand new jot
 get '/' do
-  jot_id = random_string
+  jot_id = new_jot_code
   now = Time.now
   jots.doc(jot_id).set(id: jot_id, created_at: now, updated_at: now)
 
@@ -53,6 +49,11 @@ get '/jots/:jot_id' do |jot_id|
   erb :jot
 end
 
+delete '/api/jots/:jot_id' do |jot_id|
+  jots.doc(jot_id).delete
+  redirect '/home'
+end
+
 # Update jot in db
 put '/api/jots/:jot_id' do |jot_id|
   payload = JSON.parse(request.body.read)
@@ -61,24 +62,27 @@ end
 
 helpers do
   ALPHABET = ('a'..'z').to_a.freeze
+  DIGITS = (0..9).to_a.freeze
   ENCODED_EMPTY_ARRAY = Base64.urlsafe_encode64([].to_json).freeze
 
-  def random_string(length = 10)
-    Array.new(length) { ALPHABET.sample }.join
+  def new_jot_code
+    "#{Array.new(3) { ALPHABET.sample }.join}-#{Array.new(3) { DIGITS.sample }.join}"
   end
 
   def set_recent_jot!(jot_id)
     jot_ids = Set.new(get_recent_jot_ids)
     jot_ids << jot_id
-    set_recent_jot_cookie!(jot_ids.to_a)
+    cookies[:jot_ids] = cookie_encode(jot_ids.to_a)
+  end
+
+  def get_recent_jots
+    return [] if get_recent_jot_ids.empty?
+
+    jots.where(:id, :in, get_recent_jot_ids).get
   end
 
   def get_recent_jot_ids
     cookie_decode(cookies[:jot_ids] || ENCODED_EMPTY_ARRAY)
-  end
-
-  def set_recent_jot_cookie!(jot_ids)
-    cookies[:jot_ids] = cookie_encode(jot_ids)
   end
 
   def cookie_encode(value)

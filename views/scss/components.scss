@@ -32,19 +32,38 @@
   align-items: center;
   justify-content: center;
 
-  .saved-status {
-    width: 80%;
+  .nav-bar {
+    position: absolute;
+    top: 0;
+    right: 0;
 
     display: flex;
     flex-flow: row;
     justify-content: flex-end;
 
-    color: gray;
+    padding: 1em;
+
+    > * {
+      margin-right: 1em;
+
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+
+    .saved-status {
+      color: gray;
+    }
   }
 
   .jot-body {
     width: 80%;
     height: 90%;
+
+    max-width: 50%;
+    @media only screen and (max-width: 480px) {
+      max-width: none;
+    }
 
     padding: 2em;
 
