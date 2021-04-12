@@ -40,6 +40,7 @@
     display: flex;
     flex-flow: row;
     justify-content: flex-end;
+    align-items: center;
 
     padding: 1em;
 
@@ -68,17 +69,17 @@
 
     .jot-body {
       width: 80%;
-
       max-width: 50%;
-      @media only screen and (max-width: 480px) {
-        max-width: none;
-      }
-
       padding: 3em 0;
+      flex: 1;
 
       outline: none;
       font-family: "Source Code Pro", Monaco, monospace;
       line-height: 1.5;
+
+      @media only screen and (max-width: 480px) {
+        max-width: none;
+      }
     }
   }
 }

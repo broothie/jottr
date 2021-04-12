@@ -1,12 +1,12 @@
 <main class="home-page">
   <p>👋 welcome to jottr! <a href="/" class="create-new">click here to start a new jot</a></p>
 
-  <% unless @jots.count.zero? %>
+  <% unless @jots.empty? %>
     <div>
       <p>recent jots</p>
 
       <% @jots.each do |jot| %>
-        <p><a href="/jots/<%= jot['id'] %>"><%= jot['title']&.empty? ? jot['id'] : jot['title'] %></a></p>
+        <p><a href="/jots/<%= jot[:id] %>"><%= jot[:title]&.empty? ? jot[:id] : jot[:title] %></a></p>
       <% end %>
     </div>
   <% end %>

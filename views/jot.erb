@@ -4,13 +4,14 @@
       <a href="/home"><button>home</button></a>
     <% else %>
       <p id="saved-status" class="saved-status">saved</p>
-      <a href="/home"><button>home</button></a>
-      <a href="/"><button id="new-jot">new</button></a>
-      <a href="/jots/<%= @jot[:read_only_id] %>/readonly" target="_blank"><button>readonly</button></a>
-      <button id="delete-jot">delete</button>
+      <div>
+        <a href="/home"><button>home</button></a>
+        <a href="/"><button id="new-jot">new</button></a>
+        <a href="/jots/<%= @jot[:read_only_id] %>/readonly" target="_blank"><button>readonly</button></a>
+        <button id="delete-jot">delete</button>
+      </div>
     <% end %>
   </div>
-
 
   <div id="jot-body-container" class="jot-body-container">
     <div id="jot-body" class="jot-body" contenteditable="<%= !@read_only %>">
@@ -19,65 +20,8 @@
   </div>
 </main>
 
-<script type="text/javascript" charset="utf-8">
-  <% unless @read_only %>
-    const jotId = '<%= @jot[:id] %>'
-    const inputDelayMilliseconds = 250
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const jotBodyContainer = document.getElementById('jot-body-container')
-      const jotBody = document.getElementById('jot-body')
-      const savedStatus = document.getElementById('saved-status')
-      let lastInputAt = Date.now()
-
-      scrollToBottom(jotBodyContainer)
-      setCursorToEnd(jotBody)
-
-      jotBody.addEventListener('input', () => {
-        savedStatus.innerText = 'not saved'
-        const currentInputAt = Date.now()
-        if (currentInputAt > lastInputAt) lastInputAt = currentInputAt
-
-        setTimeout(() => {
-          if (lastInputAt > Date.now() - inputDelayMilliseconds) return
-
-          savedStatus.innerText = 'saving...'
-          const title = jotBody.innerText.split('\n')[0]
-          const body = JSON.stringify({ title , body: jotBody.innerHTML })
-
-          fetch(`/api/jots/${jotId}`, { method: 'put', body })
-            .then(() => {
-              savedStatus.innerText = 'saved'
-              setTitle(title)
-            })
-        }, inputDelayMilliseconds)
-      })
-
-      document.getElementById('delete-jot').addEventListener('click', () => {
-        if (!confirm(`Are you sure you want to delete this jot (id=${jotId})`)) return
-
-        fetch(`/api/jots/${jotId}`, { method: 'delete' }).then(() => location.href = '/home')
-      })
-    })
-
-    function scrollToBottom(element) {
-      element.scrollTop = element.scrollHeight
-    }
-
-    function setCursorToEnd(contentEditable) {
-      const range = document.createRange()
-      range.selectNodeContents(contentEditable)
-      range.collapse(false)
-      const selection = window.getSelection()
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-  <% end %>
-
-  function setTitle(title) {
-    if (!title || title.length === 0) title = jotId
-    document.title = `jottr - ${title}`
-  }
-
-  setTitle('<%= @jot[:title] %>')
-</script>
+<% unless @read_only %>
+  <script type="text/javascript" charset="utf-8">
+    <%= erb :'jot.js' %>
+  </script>
+<% end %>
