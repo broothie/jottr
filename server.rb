@@ -1,5 +1,6 @@
 require 'dotenv/load'
 require 'sinatra'
+require 'sinatra/json'
 require 'sinatra/cookies'
 require 'sinatra/reloader' if development?
 require 'google/cloud/firestore'
@@ -69,16 +70,30 @@ get '/jots/:read_only_jot_id/readonly' do |read_only_jot_id|
   erb :jot
 end
 
-# Delete a jot
-delete '/api/jots/:jot_id' do |jot_id|
-  jots.doc(jot_id).delete
-  redirect '/home'
+post '/api/jots' do
+    jot_id = new_jot_code
+  now = Time.now
+  jots.doc(jot_id).set(
+    id: jot_id,
+    read_only_id: new_jot_code,
+    created_at: now,
+    updated_at: now
+  )
+
+  redirect "/jots/#{jot_id}"
+
 end
 
 # Update jot in db
 put '/api/jots/:jot_id' do |jot_id|
   payload = JSON.parse(request.body.read)
   jots.doc(jot_id).update(title: payload['title'], body: payload['body'], updated_at: Time.now)
+end
+
+# Delete a jot
+delete '/api/jots/:jot_id' do |jot_id|
+  jots.doc(jot_id).delete
+  redirect '/home'
 end
 
 get '/jobs/purge' do
