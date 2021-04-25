@@ -5,7 +5,8 @@ import Quill from "quill";
 import * as Cookie from '../cookie'
 import setTitle from "../title";
 
-const inputDelayMilliseconds = 250
+const inputDelayMilliseconds = 500
+const inputDelayOffsetMilliseconds = 10
 const whitespaceRegexp = /^\s*$/
 
 const SAVED = 'saved'
@@ -25,7 +26,7 @@ const quillConfig = {
 }
 
 export default function Jot() {
-  let quill
+  let typingTimeout, quill
   let saveOnExit = true
   const history = useHistory()
   const routeMatch = useRouteMatch('/jot/:jotId')
@@ -36,12 +37,12 @@ export default function Jot() {
   function save() {
     if (!quill) return
 
+    setSavedStatus(SAVING)
     const delta = quill.getContents()
     const title = quill.getText()
       .split('\n')
       .find((line) => !whitespaceRegexp.test(line))
 
-    setSavedStatus(SAVING)
     Api.updateJot(jotId, { title, delta })
       .then(() => {
         setSavedStatus(SAVED)
@@ -53,17 +54,12 @@ export default function Jot() {
   function initializeQuill() {
     quill = new Quill('#quill', quillConfig)
 
-    let lastTextChangeAt = Date.now()
     quill.on('text-change', (_delta, _oldContents, source) => {
       if (source !== 'user') return
 
-      const currentTextChangeAt = Date.now()
-      if (currentTextChangeAt > lastTextChangeAt) lastTextChangeAt = currentTextChangeAt
-
+      clearTimeout(typingTimeout)
       setSavedStatus(NOT_SAVED)
-      setTimeout(() => {
-        if (lastTextChangeAt < Date.now() - inputDelayMilliseconds) save()
-      }, inputDelayMilliseconds)
+      typingTimeout = setTimeout(save, inputDelayMilliseconds)
     })
   }
 

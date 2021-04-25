@@ -13,6 +13,10 @@
     max-width: 50%;
     padding: 3em 0;
 
+    @media only screen and (max-width: 480px) {
+      max-width: none;
+    }
+
     > * {
       margin-bottom: 1em;
 

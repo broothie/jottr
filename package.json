@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "watch": "parcel watch frontend/index.html --dist-dir public",
-    "build": "parcel build frontend/index.html --dist-dir public"
+    "build": "parcel build frontend/index.html --dist-dir public",
+    "clean": "rm -rf .parcel-cache .sass-cache public .byebug_history"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "2.0.0-beta.2",

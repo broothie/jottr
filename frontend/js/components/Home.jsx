@@ -32,8 +32,8 @@ export default function Home() {
   return <div className="home-page">
     <div className="home">
       <div className="welcome">
-        <p>👋 welcome to jottr!</p>
-        <Link className="button" to="/">new</Link>
+        <strong>👋 <em>welcome to jottr!</em></strong>
+        <Link className="button" to="/">new jot</Link>
       </div>
 
       {

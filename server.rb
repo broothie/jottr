@@ -43,10 +43,13 @@ namespace '/api' do
 
       # Update jot in db
       patch '/?' do |jot_id|
+        jot_ref = jots.doc(jot_id)
+
+        db_thread = Thread.new { jot_ref.get.exists? }
         payload = JSON.parse(request.body.read)
 
-        jot_ref = jots.doc(jot_id)
-        unless jot_ref.get.exists?
+        jot_exists = db_thread.value
+        unless jot_exists
           status :bad_request
           json error: "no jot found with id '#{jot_id}'"
           halt
@@ -58,21 +61,17 @@ namespace '/api' do
 
       # Delete a jot
       delete '/?' do |jot_id|
-        jot_ref = jots.doc(jot_id)
-        unless jot_ref.get.exists?
-          status :bad_request
-          json error: "no jot found with id '#{jot_id}'"
-          halt
-        end
-
-        jot_ref.delete
+        jots.doc(jot_id).delete
         status :accepted
       end
     end
   end
 
   get '/bulk/jots' do
-    jot_ids = params[:jot_ids]&.split(',')
+    jot_ids = params[:jot_ids]
+    halt json([]) unless jot_ids
+
+    jot_ids = jot_ids.split(',')
     jot_docs = firestore.transaction do |tx|
       jot_ids.map { |jot_id| tx.get("#{jots_collection}/#{jot_id}") }
     end
@@ -88,7 +87,7 @@ end
 
 # Purge job
 get '/jobs/purge' do
-  empty_jots = jots.where(:delta, :==, []).get
+  empty_jots = jots.where(:title, :==, '').get
   firestore.batch { |batch| empty_jots.each(&batch.method(:delete)) }
 
   status :accepted
