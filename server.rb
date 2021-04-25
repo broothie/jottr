@@ -36,9 +36,8 @@ namespace '/api' do
 
       # Update jot in db
       patch '/?' do |jot_id|
-        jot_ref = jots.doc(jot_id)
         payload = JSON.parse(request.body.read)
-        jot_ref.update(title: payload['title'], delta: payload['delta'], updated_at: Time.now)
+        jots.doc(jot_id).update(title: payload['title'], delta: payload['delta'], updated_at: Time.now)
         status :accepted
       end
 
