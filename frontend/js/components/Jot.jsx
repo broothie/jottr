@@ -6,7 +6,6 @@ import * as Cookie from '../cookie'
 import setTitle from "../title";
 
 const inputDelayMilliseconds = 500
-const inputDelayOffsetMilliseconds = 10
 const whitespaceRegexp = /^\s*$/
 
 const SAVED = 'saved'
@@ -14,15 +13,8 @@ const NOT_SAVED = 'not saved'
 const SAVING = 'saving...'
 
 const quillConfig = {
-  theme: 'bubble',
-  modules: {
-    toolbar: [
-      ['bold', 'italic', 'underline', 'strike', 'code-block'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ header: 1 }, { header: 2 }],
-      ['clean']
-    ]
-  }
+  theme: 'snow',
+  modules: { toolbar: '#toolbar' }
 }
 
 export default function Jot() {
@@ -105,6 +97,30 @@ export default function Jot() {
 
     <div className="quill-container">
       <div id="quill"/>
+    </div>
+
+    <div id="toolbar">
+      <span className="ql-formats">
+        <button className="ql-bold"/>
+        <button className="ql-italic"/>
+        <button className="ql-underline"/>
+        <button className="ql-strike"/>
+        <button className="ql-code-block"/>
+      </span>
+
+      <span className="ql-formats">
+        <button className="ql-header" value="1"/>
+        <button className="ql-header" value="2"/>
+      </span>
+
+      <span className="ql-formats">
+        <button className="ql-list" value="ordered"/>
+        <button className="ql-list" value="bullet"/>
+      </span>
+
+      <span className="ql-formats">
+        <button className="ql-clean"/>
+      </span>
     </div>
   </div>
 }

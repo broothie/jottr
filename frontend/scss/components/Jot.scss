@@ -56,9 +56,10 @@
       }
 
       // Editor styling
-      .ql-editor {
+      &.ql-container, &.ql-snow {
         font-family: 'Roboto Slab', serif;
         font-size: 18px;
+        border: none;
 
         ul, ol {
           padding-left: 0.2em;
@@ -68,6 +69,22 @@
           font-weight: bold;
         }
       }
+    }
+  }
+
+  #toolbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+
+    background-color: white;
+
+    &.ql-toolbar, &.ql-snow {
+      border: none;
     }
   }
 }
