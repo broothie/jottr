@@ -25,7 +25,6 @@ export default function Jot() {
 
   // Save jot to db
   function save(updateTitle = true) {
-    if (savedStatus === SAVED) return
     if (!quill) return
 
     setSavedStatus(SAVING)
