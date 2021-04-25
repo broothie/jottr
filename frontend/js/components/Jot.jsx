@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react'
 import {Link, useHistory, useRouteMatch} from 'react-router-dom'
 import * as Api from '../api'
-import Quill from "quill";
+import Quill from 'quill'
 import * as Cookie from '../cookie'
-import setTitle from "../title";
+import setTitle from '../title'
 
 const inputDelayMilliseconds = 500
 const whitespaceRegexp = /^\s*$/
@@ -12,10 +12,7 @@ const SAVED = 'saved'
 const NOT_SAVED = 'not saved'
 const SAVING = 'saving...'
 
-const quillConfig = {
-  theme: 'snow',
-  modules: { toolbar: '#toolbar' }
-}
+const quillConfig = { theme: 'snow', modules: { toolbar: '#toolbar' } }
 
 export default function Jot() {
   let typingTimeout, quill

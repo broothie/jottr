@@ -55,7 +55,7 @@ namespace '/api' do
           halt
         end
 
-        jot_ref.update(title: payload['title'], delta: payload['delta'], updated_at: Time.now)
+        jot_ref.update(update_params(payload))
         status :accepted
       end
 
@@ -94,6 +94,10 @@ get '/jobs/purge' do
 end
 
 helpers do
+  def update_params(payload)
+    payload.slice(:title, :delta).merge(updated_at: Time.now)
+  end
+
   # Codes
 
   def new_jot_code
