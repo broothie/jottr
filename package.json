@@ -5,6 +5,7 @@
   "author": "broothie <adbooth8@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "backend": "bundle exec ruby server.rb",
     "watch": "parcel watch frontend/index.html --dist-dir public",
     "build": "parcel build frontend/index.html --dist-dir public",
     "clean": "rm -rf .parcel-cache .sass-cache public .byebug_history"

@@ -24,7 +24,7 @@ export default function Jot() {
   const [saveOnClose, setSaveOnClose] = useState(true)
 
   // Save jot to db
-  function save() {
+  function save(updateTitle = true) {
     if (savedStatus === SAVED) return
     if (!quill) return
 
@@ -37,7 +37,7 @@ export default function Jot() {
     Api.updateJot(jotId, { title, delta })
       .then(() => {
         setSavedStatus(SAVED)
-        setTitle(title || jotId)
+        if (updateTitle) setTitle(title || jotId)
       })
   }
 
@@ -50,7 +50,7 @@ export default function Jot() {
 
       clearTimeout(typingTimeout)
       setSavedStatus(NOT_SAVED)
-      typingTimeout = setTimeout(save, inputDelayMilliseconds)
+      typingTimeout = setTimeout(() => save(), inputDelayMilliseconds)
     })
   }
 
@@ -80,7 +80,7 @@ export default function Jot() {
     getJot()
 
     // Before unmount
-    return () => saveOnClose && save()
+    return () => saveOnClose && save(false)
   }, [])
 
   // Markup
