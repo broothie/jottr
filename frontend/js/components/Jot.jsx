@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react'
 import {Link, useHistory, useRouteMatch} from 'react-router-dom'
-import * as api from '../api'
+import * as Api from '../api'
 import Quill from "quill";
 import * as Cookie from '../cookie'
+import setTitle from "../title";
 
 const inputDelayMilliseconds = 250
 const whitespaceRegexp = /^\s*$/
@@ -25,6 +26,7 @@ const quillConfig = {
 
 export default function Jot() {
   let quill
+  let saveOnExit = true
   const history = useHistory()
   const routeMatch = useRouteMatch('/jot/:jotId')
   const jotId = routeMatch.params.jotId
@@ -40,7 +42,11 @@ export default function Jot() {
       .find((line) => !whitespaceRegexp.test(line))
 
     setSavedStatus(SAVING)
-    api.updateJot(jotId, { title, delta }).then(() => setSavedStatus(SAVED))
+    Api.updateJot(jotId, { title, delta })
+      .then(() => {
+        setSavedStatus(SAVED)
+        setTitle(title || jotId)
+      })
   }
 
   // Start Quill
@@ -63,10 +69,13 @@ export default function Jot() {
 
   // Get jot from db
   function getJot() {
-    api.getJot(jotId)
-      .then(({ delta }) => quill.setContents(delta))
-      .then(() => quill.setSelection(quill.getText().length))
-      .then(() => Cookie.addJotId(jotId))
+    Api.getJot(jotId)
+      .then(({ title, delta }) => {
+        quill.setContents(delta)
+        quill.setSelection(quill.getText().length)
+        setTitle(title || jotId)
+        Cookie.addJotIds(jotId)
+      })
       .catch(() => history.push('/home'))
   }
 
@@ -77,7 +86,9 @@ export default function Jot() {
 
   // Delete jot
   function deleteJot() {
-    api.deleteJot(jotId).then(() => history.push('/home'))
+    Api.deleteJot(jotId)
+      .then(() => saveOnExit = false)
+      .then(() => history.push('/home'))
   }
 
   // Lifecycle
@@ -87,7 +98,9 @@ export default function Jot() {
     getJot()
 
     // Before unmount
-    return save
+    return () => {
+      if (saveOnExit) save()
+    }
   }, [])
 
   // Markup

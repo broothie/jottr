@@ -2,13 +2,12 @@
 
 ## To-do
 
-- [ ] Serve up new page (for CF caching hopefully)
-- [ ] Use ping on new
-- [ ] Use replaceState
-- [ ] Serve up JS separately
-- [ ] Use parcel
-- [ ] Use transaction to retrieve cookie jots
-- [ ] Markdown?
+- [x] Serve up new page (for CF caching hopefully)
+- [x] Use ping on new
+- [x] Use replaceState
+- [x] Serve up JS separately
+- [x] Use parcel
+- [x] Use transaction to retrieve cookie jots
 
 ## Attributions
 
