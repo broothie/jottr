@@ -60,6 +60,8 @@ GEM
       ruby2_keywords (~> 0.0.1)
     nio4r (2.5.7)
     os (1.1.1)
+    parcel (0.4)
+      rubyzip
     pry (0.13.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
@@ -77,6 +79,7 @@ GEM
       ffi (~> 1.0)
     rbtree (0.4.4)
     ruby2_keywords (0.0.4)
+    rubyzip (2.3.0)
     sass (3.7.4)
       sass-listen (~> 4.0.0)
     sass-listen (4.0.0)
@@ -107,6 +110,7 @@ DEPENDENCIES
   byebug (~> 11.1)
   dotenv (~> 2.7)
   google-cloud-firestore (~> 2.5)
+  parcel
   pry (~> 0.13.1)
   pry-byebug (~> 3.9)
   puma (~> 5.2)

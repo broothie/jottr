@@ -3,3 +3,6 @@ gin-bin
 .env
 .sass-cache
 .byebug_history
+.parcel-cache
+public
+node_modules

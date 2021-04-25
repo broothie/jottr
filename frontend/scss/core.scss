@@ -1,0 +1,29 @@
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+  font-family: Tahoma, sans-serif;
+  line-height: 1.25;
+}
+
+.link {
+  text-decoration: underline;
+}
+
+.button {
+  padding: 0.1em 0.3em;
+  border: 1px solid lightgray;
+  border-radius: 2px;
+
+  &:hover {
+    box-shadow: 0 1px 1px lightgray;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    box-shadow: inset 0 1px 1px lightgray;
+    transform: translateY(1px);
+  }
+}
