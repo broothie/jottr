@@ -31,31 +31,14 @@ namespace '/api' do
     namespace '/:jot_id' do
       # Get a jot
       get '/?' do |jot_id|
-        jot = jots.doc(jot_id).get
-        unless jot.exists?
-          status :bad_request
-          json error: "no jot found with id '#{jot_id}'"
-          halt
-        end
-
-        json jot.data
+        json jots.doc(jot_id).get.data
       end
 
       # Update jot in db
       patch '/?' do |jot_id|
         jot_ref = jots.doc(jot_id)
-
-        db_thread = Thread.new { jot_ref.get.exists? }
         payload = JSON.parse(request.body.read)
-
-        jot_exists = db_thread.value
-        unless jot_exists
-          status :bad_request
-          json error: "no jot found with id '#{jot_id}'"
-          halt
-        end
-
-        jot_ref.update(update_params(payload))
+        jot_ref.update(title: payload['title'], delta: payload['delta'], updated_at: Time.now)
         status :accepted
       end
 
@@ -89,15 +72,10 @@ end
 get '/jobs/purge' do
   empty_jots = jots.where(:title, :==, '').get
   firestore.batch { |batch| empty_jots.each(&batch.method(:delete)) }
-
   status :accepted
 end
 
 helpers do
-  def update_params(payload)
-    payload.slice(:title, :delta).merge(updated_at: Time.now)
-  end
-
   # Codes
 
   def new_jot_code

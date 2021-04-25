@@ -2,6 +2,7 @@
 
 ## To-do
 
+- [ ] Readonly
 - [x] Serve up new page (for CF caching hopefully)
 - [x] Use ping on new
 - [x] Use replaceState
