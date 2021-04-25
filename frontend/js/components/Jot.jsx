@@ -27,14 +27,16 @@ const quillConfig = {
 
 export default function Jot() {
   let typingTimeout, quill
-  let saveOnExit = true
   const history = useHistory()
   const routeMatch = useRouteMatch('/jot/:jotId')
   const jotId = routeMatch.params.jotId
+
   const [savedStatus, setSavedStatus] = useState(SAVED)
+  const [saveOnClose, setSaveOnClose] = useState(true)
 
   // Save jot to db
   function save() {
+    if (savedStatus === SAVED)
     if (!quill) return
 
     setSavedStatus(SAVING)
@@ -75,15 +77,10 @@ export default function Jot() {
       .catch(() => history.push('/home'))
   }
 
-  // Focus quill editor
-  function focusEditor() {
-    quill?.focus()
-  }
-
   // Delete jot
   function deleteJot() {
     Api.deleteJot(jotId)
-      .then(() => saveOnExit = false)
+      .then(() => setSaveOnClose(false))
       .then(() => history.push('/home'))
   }
 
@@ -94,9 +91,7 @@ export default function Jot() {
     getJot()
 
     // Before unmount
-    return () => {
-      if (saveOnExit) save()
-    }
+    return () => saveOnClose && save()
   }, [])
 
   // Markup
@@ -109,7 +104,7 @@ export default function Jot() {
     </div>
 
     <div className="quill-container">
-      <div id="quill" onClick={focusEditor}/>
+      <div id="quill"/>
     </div>
   </div>
 }
