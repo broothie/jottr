@@ -210,7 +210,7 @@ func randomLetters(length int) string {
 
 func collectionName() string {
 	if os.Getenv("ENVIRONMENT") == "production" {
-		return "jots"
+		return "production.jots"
 	} else {
 		devName := os.Getenv("DEV_NAME")
 		if devName == "" {
