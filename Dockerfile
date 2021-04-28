@@ -9,14 +9,11 @@ RUN yarn
 RUN yarn build
 
 # Backend
-FROM ruby:2.7.1
+FROM golang:1.16.3-alpine
 
-WORKDIR /usr/src/app
-COPY Gemfile Gemfile.lock puma.rb config.ru server.rb ./
+WORKDIR /go/src/github.com/broothie/jottr
+COPY go.mod go.sum main.go ./
 COPY --from=frontend /usr/src/app/public public
 
-RUN gem install bundler -v 2.1.4
-RUN bundle config set without development
-RUN bundle
-
-CMD ["bundle", "exec", "puma", "-C", "puma.rb"]
+RUN go build
+CMD ./jottr
