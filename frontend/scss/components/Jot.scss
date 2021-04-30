@@ -48,15 +48,11 @@
 
     #quill {
       width: 80%;
-      max-width: 50%;
+      max-width: 60%;
       padding: 3em 0;
 
       @media only screen and (max-width: 480px) {
         max-width: none;
-      }
-
-      &.hidden {
-        visibility: hidden;
       }
 
       // Editor styling
@@ -80,19 +76,34 @@
     }
   }
 
-  #toolbar {
+  .toolbar-container {
     position: fixed;
     bottom: 0;
     width: 100%;
+    z-index: 10;
 
     display: flex;
     flex-flow: row;
     justify-content: center;
 
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.8);
 
-    &.ql-toolbar, &.ql-snow {
-      border: none;
+    #toolbar {
+      display: flex;
+      flex-flow: row;
+      flex-wrap: wrap;
+
+      margin: 0 1em;
+
+      .toolbar-section {
+        display: flex;
+        flex-flow: row;
+        flex-wrap: nowrap;
+      }
+
+      &.ql-toolbar, &.ql-snow {
+        border: none;
+      }
     }
   }
 }

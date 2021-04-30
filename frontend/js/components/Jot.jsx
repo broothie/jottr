@@ -122,33 +122,35 @@ export default function Jot(props) {
       <div id="quill"/>
     </div>
 
-    <div id="toolbar">
-      <span className="ql-formats">
-        <button className="ql-bold"/>
-        <button className="ql-italic"/>
-        <button className="ql-underline"/>
-        <button className="ql-strike"/>
-        <button className="ql-code-block"/>
-      </span>
+    <div className="toolbar-container">
+      <div id="toolbar">
+        <span className="toolbar-section ql-formats">
+          <button className="ql-bold"/>
+          <button className="ql-italic"/>
+          <button className="ql-underline"/>
+          <button className="ql-strike"/>
+          <button className="ql-code-block"/>
+        </span>
 
-      <span className="ql-formats">
-        <button className="ql-header" value="1"/>
-        <button className="ql-header" value="2"/>
-      </span>
+          <span className="toolbar-section ql-formats">
+          <button className="ql-header" value="1"/>
+          <button className="ql-header" value="2"/>
+        </span>
 
-      <span className="ql-formats">
-        <button className="ql-list" value="ordered"/>
-        <button className="ql-list" value="bullet"/>
-      </span>
+          <span className="toolbar-section ql-formats">
+          <button className="ql-list" value="ordered"/>
+          <button className="ql-list" value="bullet"/>
+        </span>
 
-      <span className="ql-formats">
-        <button className="ql-blockquote"/>
-        <button className="ql-link"/>
-      </span>
+          <span className="toolbar-section ql-formats">
+          <button className="ql-blockquote"/>
+          <button className="ql-link"/>
+        </span>
 
-      <span className="ql-formats">
-        <button className="ql-clean"/>
-      </span>
+          <span className="toolbar-section ql-formats">
+          <button className="ql-clean"/>
+        </span>
+      </div>
     </div>
   </div>
 }
