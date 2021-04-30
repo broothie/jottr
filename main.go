@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"os"
 	"strings"
@@ -19,33 +20,30 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type PublicJot struct {
-	ID        string      `json:"id" firestore:"id"`
-	Delta     interface{} `json:"delta" firestore:"delta"`
-	Title     string      `json:"title" firestore:"title"`
-	CreatedAt time.Time   `json:"-" firestore:"created_at"`
-	UpdatedAt time.Time   `json:"-" firestore:"updated_at"`
-}
+type Map map[string]interface{}
 
-type Jot struct {
-	PublicJot
-	ReadOnlyID string `json:"read_only_id" firestore:"read_only_id"`
+var logger *log.Logger
+
+func init() {
+	logger = log.New(os.Stdout, "[jottr] ", log.LstdFlags)
 }
 
 func main() {
-	logger := log.New(os.Stdout, "[jottr] ", log.LstdFlags)
 	db, err := firestore.NewClient(context.Background(), "jottr-301706")
 	if err != nil {
-		log.Panic(err)
+		logger.Panic(err)
 		return
 	}
 
 	jots := db.Collection(collectionName())
 	router := httprouter.New()
+
+	// Serve index for all undefined routes
 	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "public/index.html")
 	})
 
+	// Ping
 	router.GET("/api/ping", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		if _, err := fmt.Fprint(w, "pong"); err != nil {
 			logger.Println(err)
@@ -53,10 +51,16 @@ func main() {
 		}
 	})
 
-	router.POST("/api/jots", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	// Create jot
+	router.POST("/api/jots", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		now := time.Now()
 		jotID := newJotCode()
-		jot := Jot{PublicJot: PublicJot{ID: jotID, CreatedAt: now, UpdatedAt: now}, ReadOnlyID: newJotCode()}
+		jot := Map{
+			"id":           jotID,
+			"read_only_id": newJotCode(),
+			"created_at":   now,
+			"updated_at":   now,
+		}
 
 		if _, err := jots.Doc(jotID).Set(r.Context(), jot); err != nil {
 			logger.Println(err)
@@ -70,33 +74,45 @@ func main() {
 		}
 	})
 
+	// Show jot
 	router.GET("/api/jots/:jot_id", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-		doc, err := jots.Doc(params.ByName("jot_id")).Get(r.Context())
-		if err != nil {
-			logger.Println(err)
-			code := http.StatusInternalServerError
-			if status.Code(err) == codes.NotFound {
-				code = http.StatusBadRequest
-			}
-
-			w.WriteHeader(code)
-			return
-		}
-
-		var jot Jot
-		if err := doc.DataTo(&jot); err != nil {
+		readOnly := false
+		jotID := params.ByName("jot_id")
+		doc, err := jots.Doc(jotID).Get(r.Context())
+		if err != nil && status.Code(err) != codes.NotFound {
 			logger.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		if !doc.Exists() {
+			docs, err := jots.Where("read_only_id", "==", jotID).Documents(r.Context()).GetAll()
+			if err != nil {
+				if status.Code(err) != codes.NotFound {
+					w.WriteHeader(http.StatusBadRequest)
+				} else {
+					logger.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+
+				return
+			}
+
+			doc = docs[0]
+			readOnly = true
+		}
+
+		jot := doc.Data()
+		jot["id"] = jot["read_only_id"] // Need to hide real jot id
+		jot["editable"] = !readOnly
 		if err := json.NewEncoder(w).Encode(jot); err != nil {
 			logger.Println(err)
 		}
 	})
 
+	// Update jot
 	router.PATCH("/api/jots/:jot_id", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-		jot := map[string]interface{}{"updated_at": time.Now()}
+		jot := Map{"updated_at": time.Now()}
 		if err := json.NewDecoder(r.Body).Decode(&jot); err != nil {
 			logger.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -112,6 +128,7 @@ func main() {
 		w.WriteHeader(http.StatusAccepted)
 	})
 
+	// Destroy jot
 	router.DELETE("/api/jots/:jot_id", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if _, err := jots.Doc(params.ByName("jot_id")).Delete(r.Context()); err != nil {
 			logger.Println(err)
@@ -122,6 +139,7 @@ func main() {
 		w.WriteHeader(http.StatusAccepted)
 	})
 
+	// Bulk get jots
 	router.GET("/api/bulk/jots", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		jotIDs := strings.Split(r.URL.Query().Get("jot_ids"), ",")
 		refs := make([]*firestore.DocumentRef, len(jotIDs))
@@ -130,7 +148,7 @@ func main() {
 		}
 
 		var docs []*firestore.DocumentSnapshot
-		err := db.RunTransaction(r.Context(), func(ctx context.Context, transaction *firestore.Transaction) error {
+		if err := db.RunTransaction(r.Context(), func(_ context.Context, transaction *firestore.Transaction) error {
 			var err error
 			if docs, err = transaction.GetAll(refs); err != nil {
 				logger.Println(err)
@@ -138,20 +156,19 @@ func main() {
 			}
 
 			return nil
-		})
-		if err != nil {
+		}); err != nil {
 			logger.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		jots := make([]Jot, 0, len(docs))
+		jots := make([]Map, 0, len(docs))
 		for _, doc := range docs {
 			if !doc.Exists() {
 				continue
 			}
 
-			var jot Jot
+			var jot Map
 			if err := doc.DataTo(&jot); err != nil {
 				logger.Println(err)
 				continue
@@ -165,8 +182,9 @@ func main() {
 		}
 	})
 
-	router.GET("/jobs/purge", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-		err := db.RunTransaction(r.Context(), func(ctx context.Context, transaction *firestore.Transaction) error {
+	// Jot purge job
+	router.GET("/jobs/purge", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		if err := db.RunTransaction(r.Context(), func(_ context.Context, transaction *firestore.Transaction) error {
 			docs, err := transaction.Documents(jots.Where("title", "==", "")).GetAll()
 			if err != nil {
 				logger.Println(err)
@@ -181,8 +199,7 @@ func main() {
 			}
 
 			return nil
-		})
-		if err != nil {
+		}); err != nil {
 			logger.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -192,20 +209,6 @@ func main() {
 	n := negroni.Classic()
 	n.UseHandler(router)
 	n.Run()
-}
-
-func newJotCode() string {
-	return fmt.Sprintf("%s-%s-%s", randomLetters(3), randomLetters(4), randomLetters(3))
-}
-
-func randomLetters(length int) string {
-	const alphabet = "abcdefghijklmnopqrstuvwxyz"
-	runes := make([]rune, length)
-	for i := 0; i < length; i++ {
-		runes[i] = rune(alphabet[rand.Intn(len(alphabet))])
-	}
-
-	return string(runes)
 }
 
 func collectionName() string {
@@ -219,4 +222,33 @@ func collectionName() string {
 
 		return fmt.Sprintf("development.%s.jots", devName)
 	}
+}
+
+func newJotCode() string {
+	return fmt.Sprintf("%s-%s-%s", randomLetters(3), randomLetters(4), randomLetters(3))
+}
+
+func randomLetters(length int) string {
+	const alphabet = "abcdefghijklmnopqrstuvwxyz"
+	runes := make([]rune, length)
+	for i := 0; i < length; i++ {
+		index, err := randomInt(len(alphabet))
+		if err != nil {
+			logger.Println(err)
+			continue
+		}
+
+		runes[i] = rune(alphabet[index])
+	}
+
+	return string(runes)
+}
+
+func randomInt(max int) (int, error) {
+	i, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0, err
+	}
+
+	return int(i.Int64()), nil
 }

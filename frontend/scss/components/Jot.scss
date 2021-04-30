@@ -55,6 +55,10 @@
         max-width: none;
       }
 
+      &.hidden {
+        visibility: hidden;
+      }
+
       // Editor styling
       &.ql-container, &.ql-snow {
         font-family: 'Roboto Slab', serif;
@@ -67,6 +71,10 @@
 
         strong {
           font-weight: bold;
+        }
+
+        .ql-editor.ql-blank::before {
+          color: lightgray;
         }
       }
     }

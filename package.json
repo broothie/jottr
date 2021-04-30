@@ -5,11 +5,12 @@
   "author": "broothie <adbooth8@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "backend": "gin -i --all --notifications",
-    "backend.bak": "bundle exec ruby server.rb",
+    "backend": "gin -i --notifications",
+    "frontend": "yarn watch",
+    "db": "gcloud beta emulators firestore start --host-port localhost:3010",
     "watch": "yarn clean && parcel watch frontend/index.html --dist-dir public",
     "build": "yarn clean && parcel build frontend/index.html --dist-dir public",
-    "clean": "rm -rf .parcel-cache .sass-cache public .byebug_history"
+    "clean": "rm -rf .parcel-cache .sass-cache public .byebug_history gin-bin"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "2.0.0-beta.2",

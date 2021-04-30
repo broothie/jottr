@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react'
-import {Link, useHistory, useRouteMatch} from 'react-router-dom'
+import {Link, useHistory} from 'react-router-dom'
 import * as Api from '../api'
 import Quill from 'quill'
 import * as Cookie from '../cookie'
-import setTitle from '../title'
+import setSubtitle from '../title'
 
 const inputDelayMilliseconds = 500
 const whitespaceRegexp = /^\s*$/
@@ -12,38 +12,49 @@ const SAVED = 'saved'
 const NOT_SAVED = 'not saved'
 const SAVING = 'saving...'
 
-const quillConfig = { theme: 'snow', modules: { toolbar: '#toolbar' } }
+const quillConfig = {
+  theme: 'snow',
+  modules: { toolbar: '#toolbar' },
+  placeholder: 'jot something...',
+}
 
-export default function Jot() {
+export default function Jot(props) {
   let typingTimeout, quill
+  let saveOnClose = true
   const history = useHistory()
-  const routeMatch = useRouteMatch('/jot/:jotId')
-  const jotId = routeMatch.params.jotId
+  const jotId = props.match.params.jotId
 
   const [savedStatus, setSavedStatus] = useState(SAVED)
-  const [saveOnClose, setSaveOnClose] = useState(true)
 
-  // Save jot to db
-  function save(updateTitle = true) {
-    if (!quill) return
+  function getTitle() {
+    if (!quill) return ''
 
-    setSavedStatus(SAVING)
-    const delta = quill.getContents()
-    const title = quill.getText()
+    return quill
+      .getText()
       .split('\n')
       .find((line) => !whitespaceRegexp.test(line))
-
-    Api.updateJot(jotId, { title, delta })
-      .then(() => {
-        setSavedStatus(SAVED)
-        if (updateTitle) setTitle(title || jotId)
-      })
+      || ''
   }
 
-  // Start Quill
-  function initializeQuill() {
-    quill = new Quill('#quill', quillConfig)
+  function updateTitle() {
+    const title = getTitle()
+    setSubtitle(title || jotId)
 
+    if (title) {
+      const normalizedTitle = title
+        .replace(/ /g, '-')
+        .replace(/[^\w-]/g, '')
+
+      history.push(`/${jotId}/${normalizedTitle}`)
+    } else {
+      history.push(`/${jotId}`)
+    }
+  }
+
+  function initializeQuill(jot) {
+    quill = new Quill('#quill', quillConfig)
+    quill.setContents(jot.delta)
+    quill.setSelection(quill.getText().length)
     quill.on('text-change', (_delta, _oldContents, source) => {
       if (source !== 'user') return
 
@@ -56,30 +67,46 @@ export default function Jot() {
   // Get jot from db
   function getJot() {
     Api.getJot(jotId)
-      .then(({ title, delta }) => {
-        quill.setContents(delta)
-        quill.setSelection(quill.getText().length)
-        setTitle(title || jotId)
+      .catch(() => history.push('/home'))
+      .then((jot) => {
+        initializeQuill(jot)
+        updateTitle()
         Cookie.addJotIds(jotId)
       })
-      .catch(() => history.push('/home'))
+      .catch(console.log)
+  }
+
+  // Save jot to db
+  function save(shouldUpdateTitle = true) {
+    if (!quill) return
+
+    setSavedStatus(SAVING)
+    const delta = quill.getContents()
+    const title = getTitle()
+
+    Api.updateJot(jotId, { title, delta })
+      .then(() => {
+        setSavedStatus(SAVED)
+        if (shouldUpdateTitle) updateTitle()
+      })
   }
 
   // Delete jot
   function deleteJot() {
     Api.deleteJot(jotId)
-      .then(() => setSaveOnClose(false))
-      .then(() => history.push('/home'))
+      .then(() => {
+        saveOnClose = false
+        Cookie.removeJotIds(jotId)
+        history.push('/home')
+      })
   }
 
-  // Lifecycle
   useEffect(() => {
-    // After mount
-    initializeQuill()
     getJot()
 
-    // Before unmount
-    return () => saveOnClose && save(false)
+    return function umount() {
+      if (saveOnClose) save(false)
+    }
   }, [])
 
   // Markup
@@ -112,6 +139,11 @@ export default function Jot() {
       <span className="ql-formats">
         <button className="ql-list" value="ordered"/>
         <button className="ql-list" value="bullet"/>
+      </span>
+
+      <span className="ql-formats">
+        <button className="ql-blockquote"/>
+        <button className="ql-link"/>
       </span>
 
       <span className="ql-formats">

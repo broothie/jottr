@@ -12,17 +12,9 @@ import Jot from "./Jot"
 export default function App() {
   return <Router>
     <Switch>
-      <Route path="/home">
-        <Home/>
-      </Route>
-
-      <Route path="/jot/:jotId">
-        <Jot/>
-      </Route>
-
-      <Route exact path="/">
-        <New/>
-      </Route>
+      <Route exact path="/" component={New}/>
+      <Route exact path="/home" component={Home}/>
+      <Route path="/:jotId" component={Jot}/>
 
       <Route>
         <Redirect to="/home"/>

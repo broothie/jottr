@@ -7,7 +7,7 @@ export default function New() {
 
   useEffect(() => {
     Api.createJot()
-      .then(({ id }) => history.replace(`/jot/${id}`))
+      .then(({ id }) => history.replace(`/${id}`))
   }, [])
 
   return null

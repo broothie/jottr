@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import {Link} from 'react-router-dom'
 import * as Api from '../api'
 import * as Cookie from '../cookie'
-import setTitle from "../title"
+import setSubtitle from "../title"
 
 export default function Home() {
   const [jots, setJots] = useState(null)
@@ -20,7 +20,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    setTitle('home')
+    setSubtitle('home')
 
     Api.bulkGetJots(...Cookie.getJotIds())
       .then((jots) => {
@@ -39,7 +39,7 @@ export default function Home() {
       {
         jotsPresent() && <div className="recent-jots">
           <strong>recent jots</strong>
-          {jots.map((jot) => <Link className="link" to={`/jot/${jot.id}`} key={jot.id}>{jot.title}</Link>)}
+          {jots.map((jot) => <Link className="link" to={`/${jot.id}`} key={jot.id}>{jot.title}</Link>)}
         </div>
       }
     </div>
